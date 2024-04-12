@@ -12,116 +12,110 @@ urls = ["https://movie.douban.com/top250?start=%d&filter=" % i
         for i in range(0, 226, 25)
         ]
 
-for url in urls:
+movies = []
+
+
+# for url in urls:
+#     resp = requests.get(url, headers=headers)
+#     soup = BeautifulSoup(resp.text, "html.parser")
+#     print("当前网页:", url, resp.status_code)
+#
+#     movie = {}
+#
+#     for li in soup.find_all("li"):
+#         items = li.find("div", class_="item")
+#         if not items:
+#             continue
+#
+#         movie['Tops'] = items.find("div", class_="pic").find("em").get_text()  # 排名
+#
+#         movie['src'] = li.find("img")["src"]  # 图片地址
+#
+#         movie['Titles'] = items.find("div", class_="hd").find("span").get_text()  # 电影名
+#
+#         movie['Directors'] = (items.find("div", class_="bd").find("p").get_text().replace("\n", "")
+#                               .replace(" ", "").replace("\xa0", " "))  # 导演和演员
+#
+#         movie['Score'] = items.find("div", class_="star").find("span", class_="rating_num").get_text()  # 评分
+#
+#         movie['spans'] = items.find("div", class_="star").find_all("span")[3].text  # 多少人评论
+#
+#         span_element = items.find("p", class_="quote")  # 简介
+#         if span_element:
+#             # 如果'span'标签存在，获取其文本内容
+#             movie['inq'] = span_element.find("span").get_text()
+#         else:
+#             # 如果'span'标签不存在，设置'inq'键的值为空字符串
+#             movie['inq'] = ""
+#
+#         movies.append(
+#             [movie['Tops'], movie['Titles'], movie['src'], movie['Directors'], movie['Score'], movie['spans'],
+#              movie['inq']])
+#
+#     time.sleep(5)  # 防止爬取太快ip被封  根据网页的robots.txt文件
+
+
+# with open("movies.txt", "w", encoding="utf8") as file:
+#     for i in movies:
+#         file.write(str(i))
+#         file.write("\n")
+# file.close()
+
+def crawl_html(url):
     resp = requests.get(url, headers=headers)
     soup = BeautifulSoup(resp.text, "html.parser")
     print("当前网页:", url, resp.status_code)
+
+    html = resp.text
+    return html
+
+
+def parse_content(html):
+    soup = BeautifulSoup(html, "html.parser")
+
+    movie = {}
+
     for li in soup.find_all("li"):
         items = li.find("div", class_="item")
         if not items:
             continue
 
-        Tops = items.find("div", class_="pic").find("em").get_text()  # 排名
-
-        imgs = li.find("img")
-        src = imgs["src"]  # 图片地址
-
-        Titles = items.find("div", class_="hd").find("span").get_text()  # 电影名
-
-
-        Directors = items.find("div", class_="bd").find("p").get_text().strip().replace("\n", "<br/>").replace('<br>',
-                                                                                                               '').replace(
-            "<br/>                            ", "\t")  # 导演
-
-        Score = items.find("div", class_="star").find("span", class_="rating_num").get_text()  # 评分
-
-        spans = items.find("div", class_="star").find_all("span")
-
-        inq = items.find("p", class_="quote")  # 简介
-        if not items.find("p", class_="quote"):
-            continue
-
-        print(Tops, Titles, src, Directors, Score, spans[3].text, inq.find("span").get_text())
-
-    time.sleep(5)  # 防止爬取太快ip被封  根据网页的robots.txt文件
-
-'''def get_html(url):
-    headers = {
-        "User-Agent": """Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"""
-    }
-    resp = requests.get(url, headers=headers)
-    # soup = BeautifulSoup(resp.text, "html.parser")
-    resp.encoding = resp.apparent_encoding
-
-    if resp.status_code == 200:
-        html = resp.text
-        return html
-    else:
-        print(resp.status_code)
-
-
-def parse_html(soup):
-    # print("当前网页:", url, resp.status_code)
-
-    movies = []
-
-    for lis in soup.find_all("li"):
-        items = lis.find("div", class_="item")
-        if not items:
-            continue
-
-        movie = {}
         movie['Tops'] = items.find("div", class_="pic").find("em").get_text()  # 排名
 
-        movie['src'] = lis.find("img")["src"]
+        movie['src'] = li.find("img")["src"]  # 图片地址
 
         movie['Titles'] = items.find("div", class_="hd").find("span").get_text()  # 电影名
 
-        movie['Directors'] = items.find("div", class_="bd").find("p").get_text().strip().replace("\n", "<br/>").replace(
-            "<br/>                            ", "\t")  # 导演
+        movie['Directors'] = (items.find("div", class_="bd").find("p").get_text().replace("\n", "")
+                              .replace(" ", "").replace("\xa0", " "))  # 导演和演员
 
         movie['Score'] = items.find("div", class_="star").find("span", class_="rating_num").get_text()  # 评分
 
-        movie['spans'] = items.find("div", class_="star").find_all("span")[3]
+        movie['spans'] = items.find("div", class_="star").find_all("span")[3].text  # 多少人评论
 
-        movie['inq'] = items.find("p", class_="quote").find("span", class_="inq").get_text()  # 简介
-        if not items.find("p", class_="quote"):
-            continue
+        span_element = items.find("p", class_="quote")  # 简介
+        if span_element:
+            # 如果'span'标签存在，获取其文本内容
+            movie['inq'] = span_element.find("span").get_text()
+        else:
+            # 如果'span'标签不存在，设置'inq'键的值为空字符串
+            movie['inq'] = ""
 
-        movies.append(movie)
-    return movies
-
-
-def print_movie_info(movies):
-    for movie in movies:
-        print(movie['Tops'], movie['Titles'], movie['src'], movie['Directors'], movie['Score'], movie['inq'])
-
-
-def add_txt(movies):
-    with open("MoviesTop250.txt", "w", encoding="utf8") as f:
-        f.write("Top\t电影名\t电影封面\t导演信息\t评分\t简介\n")
-        for movie in movies:
-            f.write(movie['Tops'])
-            f.write(movie['Titles'])
-            f.write(movie['src'])
-            f.write(movie['Directors'])
-            f.write(movie['Score'])
-            f.write(movie['inq'])
-            f.write("\n")
+        movies.append(
+            [movie['Tops'], movie['Titles'], movie['src'], movie['Directors'], movie['Score'], movie['spans'],
+             movie['inq']])
+    time.sleep(5)  # 防止爬取太快ip被封  根据网页的robots.txt文件
 
 
-def fetch_and_print_movie_info():
-    urls = ["https://movie.douban.com/top250?start=%d&filter=" % i
-            for i in range(0, 226, 25)
-            ]
-
-    for url in urls:
-        soup = BeautifulSoup(get_html(url), "html.parser")
-        movies = parse_html(soup)
-        print("当前网页:", url)
-        print_movie_info(movies)
-        # add_txt(movies)
-        time.sleep(5)
+def download_to_txt(movies):
+    with open("movies.txt", "w", encoding="utf8") as file:
+        for i in movies:
+            file.write(str(i))
+            file.write("\n")
+    file.close()
 
 
-fetch_and_print_movie_info()'''
+for url in urls:
+    html = crawl_html(url)
+    parse_content(html)
+    download_to_txt(movies)
